@@ -1,51 +1,53 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>My Lecture Notes</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }
-    img {
-      display: block;
-      margin: 20px auto;
-      max-width: 100%;
-      border: 1px solid #ccc;
-    }
-    h1, h2 {
-      text-align: center;
-    }
-  </style>
-</head>
-<body>
+# virtual_pet.py
 
-<h1>My Lecture Notes</h1>
+# Step 0: Set up the pet
+pet_name = input("Give your pet a name: ")
 
-<h2>Page 1</h2>
-<img src="page1.jpg" alt="Page 1">
+hunger = 5      # 0 = full, 10 = starving
+happiness = 5   # 0 = sad, 10 = super happy
+energy = 5      # 0 = exhausted, 10 = full energy
 
-<h2>Page 2</h2>
-<img src="page2.jpg" alt="Page 2">
-
-<h2>Page 3</h2>
-<img src="page3.jpg" alt="Page 3">
-
-<h2>Page 4</h2>
-<img src="page4.jpg" alt="Page 4">
-
-<h2>Page 5</h2>
-<img src="page5.jpg" alt="Page 5">
-
-<h2>Page 6</h2>
-<img src="page6.jpg" alt="Page 6">
-
-<h2>Page 7</h2>
-<img src="page7.jpg" alt="Page 7">
-
-<h2>Page 8</h2>
-<img src="page8.jpg" alt="Page 8">
-
-</body>
-</html>
+# Step 1: Main loop
+while True:
+    print("\n---", pet_name, "Status ---")
+    print(f"Hunger: {hunger}/10")
+    print(f"Happiness: {happiness}/10")
+    print(f"Energy: {energy}/10")
+    
+    print("\nWhat do you want to do?")
+    print("1. Feed")
+    print("2. Play")
+    print("3. Sleep")
+    print("4. Quit")
+    
+    choice = input("Choose 1-4: ")
+    
+    if choice == "1":
+        print(f"You feed {pet_name}. Yum!")
+        hunger = max(0, hunger - 2)   # Feeding reduces hunger
+        happiness = min(10, happiness + 1)
+        
+    elif choice == "2":
+        print(f"You play with {pet_name}. Fun!")
+        happiness = min(10, happiness + 2)
+        energy = max(0, energy - 2)
+        hunger = min(10, hunger + 1)
+        
+    elif choice == "3":
+        print(f"{pet_name} takes a nap. Zzz...")
+        energy = min(10, energy + 3)
+        hunger = min(10, hunger + 1)
+        
+    elif choice == "4":
+        print(f"Goodbye! {pet_name} will miss you!")
+        break
+    else:
+        print("Invalid choice. Try again!")
+        
+    # Optional: Check if pet is unhappy or starving
+    if hunger >= 10:
+        print(f"{pet_name} is starving! Feed it soon!")
+    if energy <= 0:
+        print(f"{pet_name} is exhausted! Let it sleep!")
+    if happiness <= 0:
+        print(f"{pet_name} is very sad... Play with it!")
