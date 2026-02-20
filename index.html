@@ -1,53 +1,117 @@
-# virtual_pet.py
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Pet</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            text-align: center;
+            padding: 50px;
+        }
+        #pet-container {
+            background-color: #fff;
+            border-radius: 15px;
+            padding: 30px;
+            display: inline-block;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+        #stats {
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #message {
+            margin-top: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
 
-# Step 0: Set up the pet
-pet_name = input("Give your pet a name: ")
+    <div id="pet-container">
+        <h1 id="pet-name">Your Pet</h1>
 
-hunger = 5      # 0 = full, 10 = starving
-happiness = 5   # 0 = sad, 10 = super happy
-energy = 5      # 0 = exhausted, 10 = full energy
+        <div id="stats">
+            <p>Hunger: <span id="hunger">5</span>/10</p>
+            <p>Happiness: <span id="happiness">5</span>/10</p>
+            <p>Energy: <span id="energy">5</span>/10</p>
+        </div>
 
-# Step 1: Main loop
-while True:
-    print("\n---", pet_name, "Status ---")
-    print(f"Hunger: {hunger}/10")
-    print(f"Happiness: {happiness}/10")
-    print(f"Energy: {energy}/10")
-    
-    print("\nWhat do you want to do?")
-    print("1. Feed")
-    print("2. Play")
-    print("3. Sleep")
-    print("4. Quit")
-    
-    choice = input("Choose 1-4: ")
-    
-    if choice == "1":
-        print(f"You feed {pet_name}. Yum!")
-        hunger = max(0, hunger - 2)   # Feeding reduces hunger
-        happiness = min(10, happiness + 1)
-        
-    elif choice == "2":
-        print(f"You play with {pet_name}. Fun!")
-        happiness = min(10, happiness + 2)
-        energy = max(0, energy - 2)
-        hunger = min(10, hunger + 1)
-        
-    elif choice == "3":
-        print(f"{pet_name} takes a nap. Zzz...")
-        energy = min(10, energy + 3)
-        hunger = min(10, hunger + 1)
-        
-    elif choice == "4":
-        print(f"Goodbye! {pet_name} will miss you!")
-        break
-    else:
-        print("Invalid choice. Try again!")
-        
-    # Optional: Check if pet is unhappy or starving
-    if hunger >= 10:
-        print(f"{pet_name} is starving! Feed it soon!")
-    if energy <= 0:
-        print(f"{pet_name} is exhausted! Let it sleep!")
-    if happiness <= 0:
-        print(f"{pet_name} is very sad... Play with it!")
+        <div id="actions">
+            <button onclick="feed()">Feed</button>
+            <button onclick="play()">Play</button>
+            <button onclick="sleepPet()">Sleep</button>
+        </div>
+
+        <div id="message">Take care of your pet!</div>
+    </div>
+
+    <script>
+        // Initialize pet stats
+        let hunger = 5;
+        let happiness = 5;
+        let energy = 5;
+
+        const hungerEl = document.getElementById("hunger");
+        const happinessEl = document.getElementById("happiness");
+        const energyEl = document.getElementById("energy");
+        const messageEl = document.getElementById("message");
+        const petName = prompt("Give your pet a name:", "Fluffy");
+        document.getElementById("pet-name").innerText = petName;
+
+        function updateStats() {
+            hungerEl.innerText = hunger;
+            happinessEl.innerText = happiness;
+            energyEl.innerText = energy;
+
+            if (hunger >= 10) {
+                messageEl.innerText = `${petName} is starving! Feed it soon!`;
+            } else if (happiness <= 0) {
+                messageEl.innerText = `${petName} is very sad... Play with it!`;
+            } else if (energy <= 0) {
+                messageEl.innerText = `${petName} is exhausted! Let it sleep!`;
+            } else {
+                messageEl.innerText = `${petName} is happy! Keep taking care of it!`;
+            }
+        }
+
+        function feed() {
+            hunger = Math.max(0, hunger - 2);
+            happiness = Math.min(10, happiness + 1);
+            energy = Math.min(10, energy - 1);
+            updateStats();
+        }
+
+        function play() {
+            happiness = Math.min(10, happiness + 2);
+            energy = Math.max(0, energy - 2);
+            hunger = Math.min(10, hunger + 1);
+            updateStats();
+        }
+
+        function sleepPet() {
+            energy = Math.min(10, energy + 3);
+            hunger = Math.min(10, hunger + 1);
+            updateStats();
+        }
+
+        updateStats(); // initial update
+    </script>
+
+</body>
+</html>
