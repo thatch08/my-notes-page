@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Premium Productivity Dashboard</title>
 <style>
-  /* PAGE BACKGROUND */
   body {
     margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -16,7 +15,6 @@
     background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
   }
 
-  /* DASHBOARD CONTAINER */
   #dashboard {
     width: 900px;
     max-width: 95%;
@@ -28,55 +26,15 @@
     overflow: hidden;
   }
 
-  /* LEFT AND RIGHT COLUMNS */
   .column {
     flex: 1;
     padding: 30px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
   }
 
-  /* LEFT COLUMN: CAT + TIMER */
-  #cat-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  /* BLACK CAT SHADOW */
-  #cat {
-    width: 120px;
-    height: 120px;
-    background: black;
-    border-radius: 60px 60px 30px 30px;
-    position: relative;
-    margin-bottom: 30px;
-    transition: transform 0.3s;
-  }
-  #cat::before, #cat::after {
-    content:'';
-    position:absolute;
-    width: 30px; height: 30px;
-    background: black;
-    border-radius: 50%;
-    top:-15px;
-  }
-  #cat::before { left: 15px; } /* left ear */
-  #cat::after { right: 15px; } /* right ear */
-  #cat-tail {
-    position: absolute;
-    width: 15px; height: 70px;
-    background: black;
-    bottom: 0; right: -10px;
-    border-radius: 10px;
-    transform-origin: bottom;
-    animation: tail-swing 1s infinite alternate ease-in-out;
-  }
-  @keyframes tail-swing { 0%{transform:rotate(15deg);} 100%{transform:rotate(-15deg);} }
-
-  /* POMODORO TIMER CIRCLE */
+  /* TIMER */
   #pomodoro-container {
     position: relative;
     width: 200px;
@@ -101,7 +59,23 @@
     font-weight: bold;
   }
 
-  /* RIGHT COLUMN: GOALS */
+  /* BUTTONS */
+  .btn {
+    padding: 10px 20px;
+    margin: 8px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s ease;
+    color: white;
+  }
+  .btn-start { background: #28a745; box-shadow: 0 4px #1e7e34; }
+  .btn-start:hover { background: #218838; transform: translateY(-2px); }
+  .btn-pause { background: #ffc107; box-shadow: 0 4px #cc9a06; color:#111; }
+  .btn-pause:hover { background: #e0a800; transform: translateY(-2px); }
+
+  /* GOALS */
   #goal-list {
     width: 100%;
     margin-top: 20px;
@@ -116,10 +90,9 @@
     border-radius: 10px;
     font-size: 16px;
   }
-  input, button {
-    font-size: 16px;
-  }
-  #goal-input { width: 70%; padding: 8px; border-radius: 8px; border: 1px solid #ccc; }
+  #goal-input { width: 70%; padding: 8px; border-radius: 8px; border: 1px solid #ccc; font-size:16px; }
+  #goal-add { background:#007bff; color:white; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; transition:all 0.2s; }
+  #goal-add:hover { background:#0069d9; transform:translateY(-2px);}
   #goal-progress-bar {
     width: 100%;
     height: 12px;
@@ -129,35 +102,35 @@
     margin-top: 15px;
   }
   #goal-progress { height:100%; background: #f39c12; width:0%; transition: width 0.5s; }
+
 </style>
 </head>
 <body>
 
 <div id="dashboard">
 
-  <!-- LEFT COLUMN -->
+  <!-- LEFT COLUMN: TIMER -->
   <div class="column">
-    <div id="cat-container">
-      <div id="cat">
-        <div id="cat-tail"></div>
-      </div>
-      <div id="pomodoro-container" onclick="togglePomodoro()">
-        <svg id="pomodoro-svg" width="200" height="200">
-          <circle id="bg-circle" r="90" cx="100" cy="100"></circle>
-          <circle id="progress-circle" r="90" cx="100" cy="100"></circle>
-        </svg>
-        <div id="timer-display">25:00</div>
-      </div>
-      <p>Click the timer circle to start/stop</p>
+    <h2>Pomodoro Timer</h2>
+    <div id="pomodoro-container">
+      <svg id="pomodoro-svg" width="200" height="200">
+        <circle id="bg-circle" r="90" cx="100" cy="100"></circle>
+        <circle id="progress-circle" r="90" cx="100" cy="100"></circle>
+      </svg>
+      <div id="timer-display">25:00</div>
+    </div>
+    <div>
+      <button class="btn btn-start" onclick="startPomodoro()">Start</button>
+      <button class="btn btn-pause" onclick="stopPomodoro()">Pause</button>
     </div>
   </div>
 
-  <!-- RIGHT COLUMN -->
+  <!-- RIGHT COLUMN: GOALS -->
   <div class="column">
     <h2>Goals Tracker</h2>
     <div>
       <input type="text" id="goal-input" placeholder="Add new goal">
-      <button onclick="addGoal()">Add</button>
+      <button id="goal-add" onclick="addGoal()">Add</button>
     </div>
     <div id="goal-list"></div>
     <div id="goal-progress-bar"><div id="goal-progress"></div></div>
@@ -172,14 +145,19 @@ function load(key,def){return JSON.parse(localStorage.getItem(key))||def;}
 
 // GOALS
 function addGoal(){
-  const name=document.getElementById("goal-input").value.trim();
+  const input=document.getElementById("goal-input");
+  const name=input.value.trim();
   if(!name) return;
   const goals=load("goals",[]);
   goals.push({name,done:false,streak:0,lastCompleted:null});
   save("goals",goals);
-  document.getElementById("goal-input").value="";
+  input.value="";
   renderGoals();
 }
+
+document.getElementById("goal-input").addEventListener("keypress", function(e){
+  if(e.key==="Enter") addGoal();
+});
 
 function renderGoals(){
   const list=document.getElementById("goal-list");
@@ -203,7 +181,6 @@ function toggleGoal(i){
   g.done=!g.done;
   g.lastCompleted=g.done?today:g.lastCompleted;
   save("goals",goals);
-  animateCat();
   renderGoals();
 }
 
@@ -215,24 +192,24 @@ function updateGoalProgress(goals){
 
 // POMODORO
 let pomodoroTime=25*60;
-let pomodoroInterval=null;
-let progressCircle=document.getElementById("progress-circle");
 let currentTime=pomodoroTime;
+let pomodoroInterval=null;
+const progressCircle=document.getElementById("progress-circle");
 
-function togglePomodoro(){
-  if(pomodoroInterval){ stopPomodoro(); } else { startPomodoro(); }
+function updateTimerDisplay(){
+  const min=Math.floor(currentTime/60);
+  const sec=currentTime%60;
+  document.getElementById("timer-display").innerText=`${min.toString().padStart(2,"0")}:${sec.toString().padStart(2,"0")}`;
+  const pct=((pomodoroTime-currentTime)/pomodoroTime)*565;
+  progressCircle.style.strokeDashoffset=565-pct;
 }
 
 function startPomodoro(){
   if(pomodoroInterval) return;
   pomodoroInterval=setInterval(()=>{
-    const min=Math.floor(currentTime/60);
-    const sec=currentTime%60;
-    document.getElementById("timer-display").innerText=`${min.toString().padStart(2,"0")}:${sec.toString().padStart(2,"0")}`;
-    const pct=((pomodoroTime-currentTime)/pomodoroTime)*565;
-    progressCircle.style.strokeDashoffset=565-pct;
-    if(currentTime===0){ stopPomodoro(); animateCat(); launchConfetti(); currentTime=pomodoroTime; }
+    if(currentTime<=0){ stopPomodoro(); currentTime=pomodoroTime; return; }
     currentTime--;
+    updateTimerDisplay();
   },1000);
 }
 
@@ -241,31 +218,15 @@ function stopPomodoro(){
   pomodoroInterval=null;
 }
 
-// CAT ANIMATION
-function animateCat(){
-  const cat=document.getElementById("cat");
-  cat.style.transform="translateY(-20px)";
-  setTimeout(()=>{ cat.style.transform="translateY(0px)"; },400);
-}
-
-// CONFETTI
-function launchConfetti(){
-  for(let i=0;i<30;i++){
-    const c=document.createElement("div");
-    c.style.width="10px"; c.style.height="10px";
-    c.style.background=`hsl(${Math.random()*360},100%,50%)`;
-    c.style.position="absolute";
-    c.style.left=Math.random()*window.innerWidth+"px";
-    c.style.top="0px";
-    c.style.borderRadius="50%";
-    document.body.appendChild(c);
-    c.animate([{transform:"translateY(0px)"},{transform:"translateY(500px)"}],{duration:3000});
-    setTimeout(()=>c.remove(),3000);
-  }
-}
+// CLICK INSIDE TIMER CIRCLE
+document.getElementById("pomodoro-container").addEventListener("click", ()=>{
+  if(pomodoroInterval) stopPomodoro();
+  else startPomodoro();
+});
 
 // INIT
 renderGoals();
+updateTimerDisplay();
 </script>
 
 </body>
