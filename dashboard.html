@@ -3,226 +3,295 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gamified Productivity LocalStorage</title>
+<title>Black Cat Productivity</title>
 <style>
+  /* DARK THEME */
   body {
-    font-family: Arial;
-    background: linear-gradient(to bottom, #a1c4fd, #c2e9fb);
-    display: flex; flex-direction: column; align-items: center; padding: 30px; overflow-x:hidden;
+    margin: 0;
+    font-family: 'Arial', sans-serif;
+    background: #111;
+    color: #eee;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
   }
-  #dashboard {
-    background: rgba(255,255,255,0.95);
-    border-radius: 20px; padding:30px; width:450px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.3); text-align:center; position: relative;
+
+  h1, h2 {
+    text-align: center;
   }
-  #pet-face {
-    font-size: 80px; display:inline-block; transition: transform 0.3s, all 0.3s;
+
+  button {
+    padding: 10px 20px;
+    margin: 5px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    background-color: #222;
+    color: #fff;
+    font-size: 16px;
+    transition: transform 0.1s, background 0.2s;
   }
-  button { margin:5px; padding:10px 20px; border-radius:10px; border:none; cursor:pointer;
-           background-color:#ff8c42; color:white; font-size:16px; transition: transform 0.1s, background 0.2s; }
-  button:hover { transform: scale(1.1); background-color:#ff7330; }
-  input, select { width:70%; padding:8px; margin:5px 0; border-radius:8px; border:1px solid #ccc; }
-  .habit-item { display:flex; justify-content:space-between; align-items:center; margin:5px 0; }
-  .progress-bar { width:100%; background:#ddd; border-radius:8px; overflow:hidden; height:12px; margin:5px 0; }
-  .progress { height:100%; background:#ff8c42; width:0%; transition: width 0.5s; }
-  hr { margin:20px 0; }
-  .confetti { position:absolute; width:10px; height:10px; animation: fall 3s linear forwards; }
-  @keyframes fall { 0% { transform:translateY(0) rotate(0deg); } 100% { transform:translateY(500px) rotate(720deg); opacity:0; } }
+  button:hover { transform: scale(1.1); background-color: #444; }
+
+  input {
+    padding: 8px;
+    border-radius: 8px;
+    border: none;
+    margin: 5px;
+    width: 60%;
+  }
+
+  hr { border: 1px solid #333; width: 80%; margin: 20px 0; }
+
+  /* GOALS */
+  #goal-list .goal-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 5px 0;
+    background: #222;
+    padding: 8px 12px;
+    border-radius: 8px;
+  }
+
+  .progress-bar {
+    width: 100%;
+    background: #333;
+    border-radius: 8px;
+    overflow: hidden;
+    height: 12px;
+    margin: 5px 0;
+  }
+  .progress {
+    height: 100%;
+    background: #f39c12;
+    width: 0%;
+    transition: width 0.5s;
+  }
+
+  /* POMODORO TIMER */
+  #pomodoro-container {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin: 20px auto;
+  }
+
+  #pomodoro-svg {
+    transform: rotate(-90deg);
+  }
+
+  circle {
+    fill: none;
+    stroke-width: 15;
+    stroke-linecap: round;
+  }
+  #bg-circle { stroke: #333; }
+  #progress-circle { stroke: #f39c12; stroke-dasharray: 565; stroke-dashoffset: 565; transition: stroke-dashoffset 1s linear; }
+
+  #timer-display {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 32px;
+  }
+
+  /* BLACK CAT ANIMATION */
+  #cat {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    margin: 20px auto;
+  }
+  #cat-body {
+    width: 80px;
+    height: 80px;
+    background: #000;
+    border-radius: 40px 40px 20px 20px;
+    position: relative;
+    transition: transform 0.3s;
+  }
+  #cat-ear-left, #cat-ear-right {
+    width: 20px; height: 20px;
+    background: #000;
+    position: absolute;
+    top: -10px;
+    border-radius: 50% 50% 0 0;
+    transform: rotate(45deg);
+  }
+  #cat-ear-left { left: 10px; }
+  #cat-ear-right { right: 10px; transform: rotate(-45deg); }
+  #cat-tail {
+    width: 12px; height: 60px;
+    background: #000;
+    position: absolute;
+    bottom: 0;
+    right: -10px;
+    border-radius: 6px;
+    transform-origin: bottom;
+    animation: tail-swing 1s infinite alternate ease-in-out;
+  }
+  @keyframes tail-swing { 0% { transform: rotate(10deg); } 100% { transform: rotate(-10deg); } }
 </style>
 </head>
 <body>
 
-<div id="dashboard">
-  <h2 id="user-name">Welcome!</h2>
-  <div id="pet-face">🐶</div>
+<h1>Black Cat Productivity</h1>
 
-  <!-- Pet Customization -->
-  <h3>Customize Your Pet</h3>
-  <div>
-    <select id="pet-select">
-      <option value="🐶">Dog</option>
-      <option value="🐱">Cat</option>
-      <option value="🦊">Fox</option>
-      <option value="🐼">Panda</option>
-      <option value="🐸">Frog</option>
-    </select>
-    <input type="color" id="pet-color" value="#ffcc00">
-    <button onclick="savePetCustomization()">Save</button>
+<!-- CAT ANIMATION -->
+<div id="cat">
+  <div id="cat-body">
+    <div id="cat-ear-left"></div>
+    <div id="cat-ear-right"></div>
+    <div id="cat-tail"></div>
   </div>
-
-  <hr>
-
-  <!-- HABIT TRACKER -->
-  <h3>Habits</h3>
-  <div>
-    <input type="text" id="new-habit" placeholder="Add new habit">
-    <button onclick="addHabit()">➕</button>
-  </div>
-  <div id="habit-list"></div>
-  <div class="progress-bar"><div id="habit-progress" class="progress"></div></div>
-
-  <hr>
-
-  <!-- POMODORO TIMER -->
-  <h3>Pomodoro Timer</h3>
-  <div>
-    <div id="timer-display">25:00</div>
-    <button onclick="startPomodoro()">Start</button>
-    <button onclick="stopPomodoro()">Stop</button>
-  </div>
-  <div class="progress-bar"><div id="pomodoro-progress" class="progress"></div></div>
-
-  <hr>
-
-  <!-- MOOD TRACKER -->
-  <h3>Mood Tracker</h3>
-  <div>
-    <button onclick="setMood('😊')">😊 Happy</button>
-    <button onclick="setMood('😐')">😐 Neutral</button>
-    <button onclick="setMood('😢')">😢 Sad</button>
-  </div>
-  <div id="mood-history"></div>
-
-  <hr>
-
-  <div id="message">Take care of your habits and your pet!</div>
-  <button onclick="resetAllData()">Reset All Data</button>
 </div>
 
+<hr>
+
+<!-- GOALS -->
+<h2>Goals Tracker</h2>
+<div>
+  <input type="text" id="new-goal" placeholder="Add a new goal">
+  <button onclick="addGoal()">➕ Add</button>
+</div>
+<div id="goal-list"></div>
+<div class="progress-bar"><div id="goal-progress" class="progress"></div></div>
+
+<hr>
+
+<!-- POMODORO -->
+<h2>Pomodoro Timer</h2>
+<div id="pomodoro-container">
+  <svg id="pomodoro-svg" width="200" height="200">
+    <circle id="bg-circle" r="90" cx="100" cy="100"></circle>
+    <circle id="progress-circle" r="90" cx="100" cy="100"></circle>
+  </svg>
+  <div id="timer-display">25:00</div>
+</div>
+<div>
+  <button onclick="startPomodoro()">Start</button>
+  <button onclick="stopPomodoro()">Stop</button>
+</div>
+
+<hr>
+
+<button onclick="resetAllData()">Reset All Data</button>
+
 <script>
-const habitListEl=document.getElementById("habit-list");
-const petFace=document.getElementById("pet-face");
-const messageEl=document.getElementById("message");
-const moodHistoryEl=document.getElementById("mood-history");
-const habitProgressEl=document.getElementById("habit-progress");
-const pomodoroProgressEl=document.getElementById("pomodoro-progress");
-
-let pomodoroTime=25*60; let pomodoroInterval=null;
-
 // ---------- LOCAL STORAGE HELPERS ----------
-function saveToStorage(key,value){ localStorage.setItem(key, JSON.stringify(value)); }
-function loadFromStorage(key,defaultVal){ return JSON.parse(localStorage.getItem(key)) || defaultVal; }
+function save(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+function load(key, defaultVal){ return JSON.parse(localStorage.getItem(key)) || defaultVal; }
 
-// ---------- PET CUSTOMIZATION ----------
-function savePetCustomization(){
-  const emoji=document.getElementById("pet-select").value;
-  const color=document.getElementById("pet-color").value;
-  saveToStorage("pet", {emoji,color});
-  updatePetEmoji(emoji,color);
-}
-function loadPetCustomization(){
-  const pet=loadFromStorage("pet",{emoji:"🐶",color:"#ffcc00"});
-  document.getElementById("pet-select").value=pet.emoji;
-  document.getElementById("pet-color").value=pet.color;
-  updatePetEmoji(pet.emoji,pet.color);
-}
-function updatePetEmoji(emoji,color){
-  petFace.innerText=emoji;
-  petFace.style.background=color;
-  petFace.style.borderRadius="50%"; petFace.style.padding="10px";
-}
-
-// ---------- HABITS ----------
-function addHabit(){
-  const name=document.getElementById("new-habit").value.trim();
+// ---------- GOALS ----------
+function addGoal(){
+  const name = document.getElementById("new-goal").value.trim();
   if(!name) return;
-  const habits=loadFromStorage("habits",[]);
-  habits.push({name,done:false,streak:0,lastCompleted:null});
-  saveToStorage("habits",habits);
-  document.getElementById("new-habit").value="";
-  loadHabits();
+  const goals = load("goals", []);
+  goals.push({name, done:false, streak:0, lastCompleted:null});
+  save("goals", goals);
+  document.getElementById("new-goal").value="";
+  loadGoals();
 }
 
-function loadHabits(){
-  habitListEl.innerHTML="";
-  const habits=loadFromStorage("habits",[]);
-  habits.forEach((habit,i)=>{
-    const div=document.createElement("div");
-    div.className="habit-item";
-    div.innerHTML=`<span>${habit.name} (Streak: ${habit.streak})</span>
-                   <button onclick="toggleHabit(${i})">${habit.done?"✅":"⬜"}</button>`;
-    habitListEl.appendChild(div);
+function loadGoals(){
+  const list = document.getElementById("goal-list");
+  list.innerHTML = "";
+  const goals = load("goals", []);
+  goals.forEach((goal,i)=>{
+    const div = document.createElement("div");
+    div.className = "goal-item";
+    div.innerHTML = `<span>${goal.name} (Streak: ${goal.streak})</span>
+                     <button onclick="toggleGoal(${i})">${goal.done?"✅":"⬜"}</button>`;
+    list.appendChild(div);
   });
-  updateHabitProgress(habits);
-  updatePetFace(habits);
+  updateGoalProgress(goals);
+  animateCat(goals);
 }
 
-function toggleHabit(index){
-  const habits=loadFromStorage("habits",[]);
-  const today=new Date().toDateString();
-  const habit=habits[index];
-  if(!habit.done && habit.lastCompleted!==today) habit.streak++;
-  habit.done=!habit.done;
-  habit.lastCompleted=habit.done?today:habit.lastCompleted;
-  saveToStorage("habits",habits);
-  animatePet(); checkCelebrate(habits); loadHabits();
+function toggleGoal(i){
+  const goals = load("goals", []);
+  const today = new Date().toDateString();
+  const g = goals[i];
+  if(!g.done && g.lastCompleted!==today) g.streak++;
+  g.done = !g.done;
+  g.lastCompleted = g.done ? today : g.lastCompleted;
+  save("goals", goals);
+  animateCat(goals);
+  loadGoals();
 }
 
-function updateHabitProgress(habits){
-  const total=habits.length;
-  const doneCount=habits.filter(h=>h.done).length;
-  habitProgressEl.style.width=total? (doneCount/total*100)+"%":"0%";
+function updateGoalProgress(goals){
+  const total = goals.length;
+  const done = goals.filter(g=>g.done).length;
+  document.getElementById("goal-progress").style.width = total ? (done/total*100)+"%" : "0%";
 }
 
 // ---------- POMODORO ----------
+let pomodoroTime = 25*60;
+let pomodoroInterval = null;
+let progressCircle = document.getElementById("progress-circle");
+
 function startPomodoro(){
   if(pomodoroInterval) return;
-  let time=pomodoroTime;
-  pomodoroInterval=setInterval(()=>{
-    const min=Math.floor(time/60); const sec=time%60;
-    document.getElementById("timer-display").innerText=`${min.toString().padStart(2,"0")}:${sec.toString().padStart(2,"0")}`;
-    if(time===0){ clearInterval(pomodoroInterval); pomodoroInterval=null; messageEl.innerText="Pomodoro complete! 🎉"; animatePet(); launchConfetti(); }
+  let time = pomodoroTime;
+  pomodoroInterval = setInterval(()=>{
+    const min = Math.floor(time/60);
+    const sec = time%60;
+    document.getElementById("timer-display").innerText = `${min.toString().padStart(2,"0")}:${sec.toString().padStart(2,"0")}`;
+    const pct = ((pomodoroTime - time)/pomodoroTime)*565;
+    progressCircle.style.strokeDashoffset = 565 - pct;
+    if(time===0){
+      clearInterval(pomodoroInterval);
+      pomodoroInterval=null;
+      animateCat(); launchConfetti();
+    }
     time--;
   },1000);
 }
-function stopPomodoro(){ clearInterval(pomodoroInterval); pomodoroInterval=null; }
 
-// ---------- MOOD ----------
-function setMood(mood){
-  const moods=loadFromStorage("moods",[]);
-  moods.unshift({mood,date:new Date().toDateString()});
-  if(moods.length>7) moods.pop();
-  saveToStorage("moods",moods);
-  loadMoodHistory();
-  animatePet(); launchConfetti();
-}
-function loadMoodHistory(){
-  moodHistoryEl.innerHTML="";
-  const moods=loadFromStorage("moods",[]);
-  moods.forEach(m=>{ const div=document.createElement("div"); div.innerText=`${m.date}: ${m.mood}`; moodHistoryEl.appendChild(div); });
+function stopPomodoro(){
+  clearInterval(pomodoroInterval);
+  pomodoroInterval=null;
 }
 
-// ---------- PET ANIMATION & CONFETTI ----------
-function animatePet(){
-  petFace.style.transform="translateY(-20px) rotate(15deg)";
-  setTimeout(()=>{ petFace.style.transform="translateY(0px) rotate(0deg)"; },400);
+// ---------- CAT ANIMATION ----------
+function animateCat(goals){
+  const cat = document.getElementById("cat-body");
+  cat.style.transform = "translateY(-20px)";
+  setTimeout(()=>{ cat.style.transform="translateY(0px)"; },400);
 }
 
-function checkCelebrate(habits){
-  if(habits.length && habits.every(h=>h.done)) launchConfetti();
-  if(habits.some(h=>h.streak>=5)) launchConfetti();
-}
-
+// ---------- CONFETTI ----------
 function launchConfetti(){
   for(let i=0;i<30;i++){
-    const c=document.createElement("div"); c.className="confetti";
-    c.style.left=Math.random()*430+"px"; c.style.background=`hsl(${Math.random()*360},100%,50%)`;
-    document.getElementById("dashboard").appendChild(c);
+    const c = document.createElement("div");
+    c.style.width="10px"; c.style.height="10px";
+    c.style.background=`hsl(${Math.random()*360},100%,50%)`;
+    c.style.position="absolute";
+    c.style.left=Math.random()*window.innerWidth+"px";
+    c.style.top="0px";
+    c.style.borderRadius="50%";
+    document.body.appendChild(c);
+    c.animate([{transform:"translateY(0px)"},{transform:"translateY(500px)"}],{duration:3000});
     setTimeout(()=>c.remove(),3000);
   }
 }
 
-// ---------- RESET DATA ----------
+// ---------- RESET ----------
 function resetAllData(){
-  if(confirm("Are you sure you want to delete all data?")){
-    localStorage.clear(); loadHabits(); loadMoodHistory(); loadPetCustomization();
+  if(confirm("Clear all goals and pomodoro progress?")){
+    localStorage.clear();
+    loadGoals();
+    document.getElementById("timer-display").innerText="25:00";
+    progressCircle.style.strokeDashoffset=565;
   }
 }
 
 // ---------- INIT ----------
-loadPetCustomization();
-loadHabits();
-loadMoodHistory();
+loadGoals();
 </script>
+
 </body>
 </html>
