@@ -5,113 +5,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Virtual Pet</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-            text-align: center;
-            padding: 50px;
-        }
-        #pet-container {
-            background-color: #fff;
-            border-radius: 15px;
-            padding: 30px;
-            display: inline-block;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-        }
-        #stats {
-            margin: 20px 0;
-        }
-        button {
-            padding: 10px 20px;
-            margin: 5px;
-            font-size: 16px;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            background-color: #4CAF50;
-            color: white;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        #message {
-            margin-top: 20px;
-            font-weight: bold;
-            color: #333;
-        }
+        body { font-family: Arial; text-align: center; padding: 50px; }
+        #pet-container { background: #fff; padding: 30px; border-radius: 15px; box-shadow: 0 0 10px rgba(0,0,0,0.2); display: inline-block; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; border-radius: 8px; background: #4CAF50; color: white; border: none; }
+        button:hover { background: #45a049; }
+        #message { margin-top: 20px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div id="pet-container">
-        <h1 id="pet-name">Your Pet</h1>
+<div id="pet-container">
+    <h1 id="pet-name">Your Pet</h1>
+    <p>Hunger: <span id="hunger">5</span>/10</p>
+    <p>Happiness: <span id="happiness">5</span>/10</p>
+    <p>Energy: <span id="energy">5</span>/10</p>
 
-        <div id="stats">
-            <p>Hunger: <span id="hunger">5</span>/10</p>
-            <p>Happiness: <span id="happiness">5</span>/10</p>
-            <p>Energy: <span id="energy">5</span>/10</p>
-        </div>
-
-        <div id="actions">
-            <button onclick="feed()">Feed</button>
-            <button onclick="play()">Play</button>
-            <button onclick="sleepPet()">Sleep</button>
-        </div>
-
-        <div id="message">Take care of your pet!</div>
+    <div>
+        <button onclick="feed()">Feed</button>
+        <button onclick="play()">Play</button>
+        <button onclick="sleepPet()">Sleep</button>
     </div>
 
-    <script>
-        // Initialize pet stats
-        let hunger = 5;
-        let happiness = 5;
-        let energy = 5;
+    <div id="message">Take care of your pet!</div>
+</div>
 
-        const hungerEl = document.getElementById("hunger");
-        const happinessEl = document.getElementById("happiness");
-        const energyEl = document.getElementById("energy");
-        const messageEl = document.getElementById("message");
-        const petName = prompt("Give your pet a name:", "Fluffy");
-        document.getElementById("pet-name").innerText = petName;
+<script>
+let hunger = 5, happiness = 5, energy = 5;
 
-        function updateStats() {
-            hungerEl.innerText = hunger;
-            happinessEl.innerText = happiness;
-            energyEl.innerText = energy;
+const hungerEl = document.getElementById("hunger");
+const happinessEl = document.getElementById("happiness");
+const energyEl = document.getElementById("energy");
+const messageEl = document.getElementById("message");
 
-            if (hunger >= 10) {
-                messageEl.innerText = `${petName} is starving! Feed it soon!`;
-            } else if (happiness <= 0) {
-                messageEl.innerText = `${petName} is very sad... Play with it!`;
-            } else if (energy <= 0) {
-                messageEl.innerText = `${petName} is exhausted! Let it sleep!`;
-            } else {
-                messageEl.innerText = `${petName} is happy! Keep taking care of it!`;
-            }
-        }
+const petName = prompt("Give your pet a name:", "Fluffy");
+document.getElementById("pet-name").innerText = petName;
 
-        function feed() {
-            hunger = Math.max(0, hunger - 2);
-            happiness = Math.min(10, happiness + 1);
-            energy = Math.min(10, energy - 1);
-            updateStats();
-        }
+function updateStats() {
+    hungerEl.innerText = hunger;
+    happinessEl.innerText = happiness;
+    energyEl.innerText = energy;
 
-        function play() {
-            happiness = Math.min(10, happiness + 2);
-            energy = Math.max(0, energy - 2);
-            hunger = Math.min(10, hunger + 1);
-            updateStats();
-        }
+    if (hunger >= 10) messageEl.innerText = `${petName} is starving! Feed it soon!`;
+    else if (happiness <= 0) messageEl.innerText = `${petName} is very sad... Play with it!`;
+    else if (energy <= 0) messageEl.innerText = `${petName} is exhausted! Let it sleep!`;
+    else messageEl.innerText = `${petName} is happy! Keep taking care of it!`;
+}
 
-        function sleepPet() {
-            energy = Math.min(10, energy + 3);
-            hunger = Math.min(10, hunger + 1);
-            updateStats();
-        }
+function feed() { hunger = Math.max(0, hunger - 2); happiness = Math.min(10, happiness + 1); energy = Math.min(10, energy - 1); updateStats(); }
+function play() { happiness = Math.min(10, happiness + 2); energy = Math.max(0, energy - 2); hunger = Math.min(10, hunger + 1); updateStats(); }
+function sleepPet() { energy = Math.min(10, energy + 3); hunger = Math.min(10, hunger + 1); updateStats(); }
 
-        updateStats(); // initial update
-    </script>
+updateStats();
+</script>
 
 </body>
 </html>
