@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ultimate Gamified Productivity</title>
+<title>Gamified Productivity LocalStorage</title>
 <style>
   body {
     font-family: Arial;
@@ -86,181 +86,143 @@
   <hr>
 
   <div id="message">Take care of your habits and your pet!</div>
-  <button onclick="logout()">Log Out</button>
+  <button onclick="resetAllData()">Reset All Data</button>
 </div>
 
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
 <script>
-  const firebaseConfig = { AIzaSyD5tVw8vb6qZRDKJCyja0J09xE4iBwkjp8 };
-  firebase.initializeApp(firebaseConfig);
-  const auth=firebase.auth(); const db=firebase.firestore();
-  let userId=null;
-  const habitListEl=document.getElementById("habit-list");
-  const petFace=document.getElementById("pet-face");
-  const messageEl=document.getElementById("message");
-  const userNameEl=document.getElementById("user-name");
-  const moodHistoryEl=document.getElementById("mood-history");
-  const habitProgressEl=document.getElementById("habit-progress");
-  const pomodoroProgressEl=document.getElementById("pomodoro-progress");
+const habitListEl=document.getElementById("habit-list");
+const petFace=document.getElementById("pet-face");
+const messageEl=document.getElementById("message");
+const moodHistoryEl=document.getElementById("mood-history");
+const habitProgressEl=document.getElementById("habit-progress");
+const pomodoroProgressEl=document.getElementById("pomodoro-progress");
 
-  let pomodoroTime=25*60; let pomodoroInterval=null;
+let pomodoroTime=25*60; let pomodoroInterval=null;
 
-  auth.onAuthStateChanged(user=>{
-    if(user){ 
-      userId=user.uid; userNameEl.innerText=`Welcome, ${user.email.split("@")[0]}!`; 
-      dailyResetHabits(); loadHabits(); loadMoodHistory(); loadPomodoroProgress(); loadPetCustomization();
-    } else { window.location.href="index.html"; }
+// ---------- LOCAL STORAGE HELPERS ----------
+function saveToStorage(key,value){ localStorage.setItem(key, JSON.stringify(value)); }
+function loadFromStorage(key,defaultVal){ return JSON.parse(localStorage.getItem(key)) || defaultVal; }
+
+// ---------- PET CUSTOMIZATION ----------
+function savePetCustomization(){
+  const emoji=document.getElementById("pet-select").value;
+  const color=document.getElementById("pet-color").value;
+  saveToStorage("pet", {emoji,color});
+  updatePetEmoji(emoji,color);
+}
+function loadPetCustomization(){
+  const pet=loadFromStorage("pet",{emoji:"🐶",color:"#ffcc00"});
+  document.getElementById("pet-select").value=pet.emoji;
+  document.getElementById("pet-color").value=pet.color;
+  updatePetEmoji(pet.emoji,pet.color);
+}
+function updatePetEmoji(emoji,color){
+  petFace.innerText=emoji;
+  petFace.style.background=color;
+  petFace.style.borderRadius="50%"; petFace.style.padding="10px";
+}
+
+// ---------- HABITS ----------
+function addHabit(){
+  const name=document.getElementById("new-habit").value.trim();
+  if(!name) return;
+  const habits=loadFromStorage("habits",[]);
+  habits.push({name,done:false,streak:0,lastCompleted:null});
+  saveToStorage("habits",habits);
+  document.getElementById("new-habit").value="";
+  loadHabits();
+}
+
+function loadHabits(){
+  habitListEl.innerHTML="";
+  const habits=loadFromStorage("habits",[]);
+  habits.forEach((habit,i)=>{
+    const div=document.createElement("div");
+    div.className="habit-item";
+    div.innerHTML=`<span>${habit.name} (Streak: ${habit.streak})</span>
+                   <button onclick="toggleHabit(${i})">${habit.done?"✅":"⬜"}</button>`;
+    habitListEl.appendChild(div);
   });
+  updateHabitProgress(habits);
+  updatePetFace(habits);
+}
 
-  // ---------------- HABITS ----------------
-  function addHabit(){
-    const name=document.getElementById("new-habit").value.trim();
-    if(!name) return;
-    db.collection("users").doc(userId).collection("habits").doc().set({name,done:false,streak:0,lastCompleted:null})
-      .then(()=>{ document.getElementById("new-habit").value=""; loadHabits(); });
+function toggleHabit(index){
+  const habits=loadFromStorage("habits",[]);
+  const today=new Date().toDateString();
+  const habit=habits[index];
+  if(!habit.done && habit.lastCompleted!==today) habit.streak++;
+  habit.done=!habit.done;
+  habit.lastCompleted=habit.done?today:habit.lastCompleted;
+  saveToStorage("habits",habits);
+  animatePet(); checkCelebrate(habits); loadHabits();
+}
+
+function updateHabitProgress(habits){
+  const total=habits.length;
+  const doneCount=habits.filter(h=>h.done).length;
+  habitProgressEl.style.width=total? (doneCount/total*100)+"%":"0%";
+}
+
+// ---------- POMODORO ----------
+function startPomodoro(){
+  if(pomodoroInterval) return;
+  let time=pomodoroTime;
+  pomodoroInterval=setInterval(()=>{
+    const min=Math.floor(time/60); const sec=time%60;
+    document.getElementById("timer-display").innerText=`${min.toString().padStart(2,"0")}:${sec.toString().padStart(2,"0")}`;
+    if(time===0){ clearInterval(pomodoroInterval); pomodoroInterval=null; messageEl.innerText="Pomodoro complete! 🎉"; animatePet(); launchConfetti(); }
+    time--;
+  },1000);
+}
+function stopPomodoro(){ clearInterval(pomodoroInterval); pomodoroInterval=null; }
+
+// ---------- MOOD ----------
+function setMood(mood){
+  const moods=loadFromStorage("moods",[]);
+  moods.unshift({mood,date:new Date().toDateString()});
+  if(moods.length>7) moods.pop();
+  saveToStorage("moods",moods);
+  loadMoodHistory();
+  animatePet(); launchConfetti();
+}
+function loadMoodHistory(){
+  moodHistoryEl.innerHTML="";
+  const moods=loadFromStorage("moods",[]);
+  moods.forEach(m=>{ const div=document.createElement("div"); div.innerText=`${m.date}: ${m.mood}`; moodHistoryEl.appendChild(div); });
+}
+
+// ---------- PET ANIMATION & CONFETTI ----------
+function animatePet(){
+  petFace.style.transform="translateY(-20px) rotate(15deg)";
+  setTimeout(()=>{ petFace.style.transform="translateY(0px) rotate(0deg)"; },400);
+}
+
+function checkCelebrate(habits){
+  if(habits.length && habits.every(h=>h.done)) launchConfetti();
+  if(habits.some(h=>h.streak>=5)) launchConfetti();
+}
+
+function launchConfetti(){
+  for(let i=0;i<30;i++){
+    const c=document.createElement("div"); c.className="confetti";
+    c.style.left=Math.random()*430+"px"; c.style.background=`hsl(${Math.random()*360},100%,50%)`;
+    document.getElementById("dashboard").appendChild(c);
+    setTimeout(()=>c.remove(),3000);
   }
+}
 
-  function loadHabits(){
-    habitListEl.innerHTML="";
-    db.collection("users").doc(userId).collection("habits").get()
-      .then(snapshot=>{
-        const habitsData=[];
-        snapshot.forEach(doc=>{
-          const habit=doc.data(); habitsData.push({id:doc.id,...habit});
-          const div=document.createElement("div");
-          div.className="habit-item";
-          div.innerHTML=`<span>${habit.name} (Streak: ${habit.streak})</span>
-                         <button onclick="toggleHabit('${doc.id}',${habit.done})">${habit.done?"✅":"⬜"}</button>`;
-          habitListEl.appendChild(div);
-        });
-        updatePetFace(habitsData); updateHabitProgress(habitsData); checkCelebrate(habitsData);
-      });
+// ---------- RESET DATA ----------
+function resetAllData(){
+  if(confirm("Are you sure you want to delete all data?")){
+    localStorage.clear(); loadHabits(); loadMoodHistory(); loadPetCustomization();
   }
+}
 
-  function toggleHabit(habitId,done){
-    const ref=db.collection("users").doc(userId).collection("habits").doc(habitId);
-    ref.get().then(doc=>{
-      const data=doc.data(); const today=new Date().toDateString(); let newStreak=data.streak;
-      if(!done && data.lastCompleted!==today) newStreak++;
-      ref.update({done:!done,streak:newStreak,lastCompleted:!done?today:data.lastCompleted})
-         .then(()=>{ animatePet(); loadHabits(); });
-    });
-  }
-
-  function updatePetFace(habits){
-    const total=habits.length; const doneCount=habits.filter(h=>h.done).length;
-    const maxStreak=habits.length>0? Math.max(...habits.map(h=>h.streak)):0;
-    let emoji=petFace.innerText; // keep user choice
-    if(total && doneCount===total && maxStreak>=3) emoji+="💫";
-    petFace.innerText=emoji;
-    animatePet();
-  }
-
-  function animatePet(){
-    petFace.style.transform="translateY(-20px) rotate(15deg)";
-    setTimeout(()=>{ petFace.style.transform="translateY(0px) rotate(0deg)"; },400);
-  }
-
-  function updateHabitProgress(habits){
-    const total=habits.length; const doneCount=habits.filter(h=>h.done).length;
-    habitProgressEl.style.width=total? (doneCount/total*100)+"%":"0%";
-  }
-
-  function dailyResetHabits(){
-    const today=new Date().toDateString();
-    db.collection("users").doc(userId).collection("habits").get().then(snapshot=>{
-      snapshot.forEach(doc=>{
-        const data=doc.data();
-        if(data.lastCompleted!==today && data.done===true) doc.ref.update({done:false});
-      });
-    });
-  }
-
-  // ---------------- POMODORO ----------------
-  function startPomodoro(){
-    if(pomodoroInterval) return; let time=pomodoroTime;
-    pomodoroInterval=setInterval(()=>{
-      const min=Math.floor(time/60); const sec=time%60;
-      document.getElementById("timer-display").innerText=`${min.toString().padStart(2,"0")}:${sec.toString().padStart(2,"0")}`;
-      if(time===0){ clearInterval(pomodoroInterval); pomodoroInterval=null; petFace.innerText+="🎉"; savePomodoroSession(); launchConfetti(); }
-      time--;
-    },1000);
-  }
-
-  function stopPomodoro(){ clearInterval(pomodoroInterval); pomodoroInterval=null; }
-
-  function savePomodoroSession(){
-    db.collection("users").doc(userId).collection("pomodoro").doc().set({date:new Date().toISOString()})
-      .then(()=> loadPomodoroProgress());
-  }
-
-  function loadPomodoroProgress(){
-    db.collection("users").doc(userId).collection("pomodoro").where("date",">=",new Date().toDateString()).get()
-      .then(snapshot=> pomodoroProgressEl.style.width=Math.min(snapshot.size*10,100)+"%");
-  }
-
-  // ---------------- MOOD ----------------
-  function setMood(mood){
-    const today=new Date().toDateString();
-    db.collection("users").doc(userId).collection("moods").doc(today).set({mood,date:today})
-      .then(()=>{ loadMoodHistory(); animatePet(); launchConfetti(); });
-  }
-
-  function loadMoodHistory(){
-    moodHistoryEl.innerHTML="";
-    db.collection("users").doc(userId).collection("moods").orderBy("date","desc").limit(7).get()
-      .then(snapshot=>{ snapshot.forEach(doc=>{
-        const data=doc.data(); const div=document.createElement("div");
-        div.innerText=`${data.date}: ${data.mood}`; moodHistoryEl.appendChild(div);
-      }); });
-  }
-
-  // ---------------- PET CUSTOMIZATION ----------------
-  function loadPetCustomization(){
-    db.collection("users").doc(userId).get().then(doc=>{
-      if(doc.exists){
-        const data=doc.data();
-        if(data.petEmoji) document.getElementById("pet-select").value=data.petEmoji;
-        if(data.petColor) document.getElementById("pet-color").value=data.petColor;
-        updatePetEmoji(data.petEmoji, data.petColor);
-      }
-    });
-  }
-
-  function savePetCustomization(){
-    const emoji=document.getElementById("pet-select").value;
-    const color=document.getElementById("pet-color").value;
-    db.collection("users").doc(userId).set({petEmoji:emoji,petColor:color},{merge:true})
-      .then(()=> updatePetEmoji(emoji,color));
-  }
-
-  function updatePetEmoji(emoji,color){
-    petFace.innerText=emoji;
-    petFace.style.background=color;
-    petFace.style.borderRadius="50%"; petFace.style.padding="10px";
-  }
-
-  // ---------------- CONFETTI ----------------
-  function launchConfetti(){
-    for(let i=0;i<30;i++){
-      const c=document.createElement("div"); c.className="confetti";
-      c.style.left=Math.random()*430+"px"; c.style.background=`hsl(${Math.random()*360},100%,50%)`;
-      document.getElementById("dashboard").appendChild(c);
-      setTimeout(()=>c.remove(),3000);
-    }
-  }
-
-  function checkCelebrate(habits){
-    if(habits.length && habits.every(h=>h.done)) launchConfetti();
-    if(habits.some(h=>h.streak>=5)) launchConfetti();
-  }
-
-  // ---------------- LOGOUT ----------------
-  function logout(){ auth.signOut().then(()=>window.location.href="index.html"); }
+// ---------- INIT ----------
+loadPetCustomization();
+loadHabits();
+loadMoodHistory();
 </script>
 </body>
 </html>
